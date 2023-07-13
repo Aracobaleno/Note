@@ -1,6 +1,8 @@
 # Git
 
+> 学习时的痛苦是暂时的 未学到的痛苦是终生的
 
+[学习链接](https://oschina.gitee.io/learn-git-branching/)
 
 ## 版本控制
 
