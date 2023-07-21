@@ -115,7 +115,21 @@ git commit -m “消息内容”# -m 提交信息
 
 4、名称前面路径分隔符是（/），忽略的文件在此目录下，而子目录中的文件不忽略
 
-5、名称前后路径分隔符是（/），忽略此目录下该名称的子目录，而非文件（默认文件或目录都忽略）
+5、名称后路径分隔符是（/），忽略此目录下该名称的子目录，而非文件（默认文件或目录都忽略）
+
+```shell
+bin/: 忽略当前路径下的bin文件夹，该文件夹下的所有内容都会被忽略，不忽略 bin 文件
+/bin: 忽略根目录下的bin文件
+/*.c: 忽略 cat.c，不忽略 build/cat.c
+debug/*.obj: 忽略 debug/io.obj，不忽略 debug/common/io.obj 和 tools/debug/io.obj
+**/foo: 忽略/foo, a/foo, a/b/foo等
+a/**/b: 忽略a/b, a/x/b, a/x/y/b等
+!/bin/run.sh: 不忽略 bin 目录下的 run.sh 文件
+*.log: 忽略所有 .log 文件
+config.php: 忽略当前路径的 config.php 文件
+```
+
+
 
 
 
