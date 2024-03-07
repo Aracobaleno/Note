@@ -490,7 +490,7 @@ VS this：
 2. 重写run()方法，编写线程执行体
 3. 创建线程对象，调用start()方法启动线程
 
-
+线程不一定立即执行，CPU安排调度
 
 ### 实现Runnable方法
 
@@ -549,3 +549,228 @@ public interface Runnable {
 
 对于函数式接口，我们可以通过lambda表达式来创建该接口的对象
 
+
+
+### 线程状态
+
+1、新生状态：new Thread();
+
+2、就绪状态：调用start();
+
+3、运行状态：调度
+
+4、阻塞状态：sleep，wait，同步锁，阻塞借出，重回就绪
+
+5、死亡状态：线程中断或结束，一旦死亡不能再次启动
+
+Thread.State
+
+NEW, RUNNABLE, BLOCKED, WAITING, TIMED_WAITING,  TERMINATED
+
+
+
+#### 线程方法
+
+ 方法                           | 说明                       
+ ------------------------------ | -------------------------- 
+ setPriority(int newPriority)   | 更改优先级                 
+ static void sleep(long millis) | 线程休眠毫秒               
+ void join()                    | 等待该线程终止             
+ static void yield()            | 暂停当前线程，执行其他线程 
+ void interrupt()               | 中断线程（别用）           
+ boolean isAlive()              | 是否处于活动状态           
+
+#### 停止线程
+
+不推荐JDK提供的stop()、destroy()方法
+
+<font color='red'>推荐线程自己停止</font>
+
+建议使用一个标志位进行终止，当flag = false，则线程终止
+
+#### 线程休眠
+
+sleep()
+
+模拟延时，倒计时
+
+<font color='red'>每个对象都有一个锁，sleep不会释放锁</font>
+
+#### 线程礼让
+
+yield()
+
+线程暂停，但不阻塞；运行态变为就绪态；礼让不一定成功，看CPU调度
+
+#### join()
+
+join合并线程，待此线程执行完，再执行其他线程，其他线程阻塞（可以想象成插队）
+
+#### 线程优先级
+
+优先级的设定建议在start()调度之前
+
+优先级低只意味着获得调度的概率低，并不是优先级低就不会被调度，还是看CPU调度
+
+性能倒置（低的线程被先执行）
+
+#### 守护（daemon）线程
+
+线程分为用户线程和守护线程
+
+虚拟机必须确保用户线程执行完毕 main()
+
+虚拟机不用等待守护线程执行完毕 gc
+
+如，后台记录操作日志，监控内存，垃圾回收等待
+
+
+
+### 线程同步
+
+线程有自己的工作内存，互不影响。
+
+线程同步其实就是一种等待机制，多个需要同事访问此对象的线程进入这个对象的等待池形成队列，前面线程用完，后面再用。形成条件：<font color='red'>队列+锁</font>
+
+synchronized
+
+在访问时加入锁机制synchronized，当一个线程获得对象的排它锁，独占资源，其他线程必须等待，使用后释放锁即可。存在以下问题:
+
+一个线程持有锁会导致其他所有需要此锁的线程挂起;
+在多线程竞争下,加锁,释放锁会导致比较多的上下文切换和调度延时,引起性能问题;
+如果一个优先级高的线程等待一个优先级低的线程释放锁会导致优先级倒置﹐引起性能问题．
+
+synchronized默认锁this
+
+同步方法：public synchronized void run(){}
+
+同步块：synchronized (obj) {}锁需要增删改的对象
+
+### 死锁
+
+多个线程互相抱着对方需要的资源，然后形成僵持.
+
+#### 产生死锁的四个必要条件:
+
+1. 互斥条件:一个资源每次只能被一个进程使用。
+
+2. 请求与保持条件:一个进程因请求资源而阻塞时，对已获得的资源保持不放。
+
+3. 不剥夺条件:进程已获得的资源，在末使用完之前，不能强行剥夺。
+
+### synchronized 与Lock的对比
+
+1. Lock是显式锁（手动开启和关闭锁，别忘记关闭锁)synchronized是隐式锁，出了作用域自动释放
+
+2. Lock只有代码块锁，synchronized有代码块锁和方法锁
+3. 使用Lock锁，JVM将花费较少的时间来调度线程，性能更好。并且具有更好的扩展性(提供更多的子类)
+4. 优先使用顺序:
+   Lock >同步代码块（已经进入了方法体，分配了相应资源)>同步方法（在方法体之外)
+
+### 线程通信
+
+方法名|作用
+--|--
+wait()|线程等待，直到其他线程通知，与sleep不同，会释放锁
+wait(long time)|制定等待毫秒数
+notify()|唤醒一个处于等待的线程
+notifyAll()|唤醒同一个对象上所有调用wait()方法的线程，优先级别搞得线程优先调度
+
+### 使用线程池
+
+- 背景:经常创建和销毁、使用量特别大的资源，比如并发情况下的线程，对性能影响很大。
+- 思路:提前创建好多个线程，放入线程池中，使用时直接获取，使用完放回池中。可以避免频繁创建销毁、实现重复利用。类似生活中的公共交通工具。
+- 好处:
+  - 提高响应速度（减少了创建新线程的时间)
+  - 降低资源消耗（重复利用线程池中线程，不需要每次都创建)
+  - 便于线程管理(....)
+    - corePoolSize:核心池的大小
+    - maximumPoolSize:最大线程数
+    - keepAliveTime:线程没有任务时最多保持多长时间后会终止
+
+- JDK 5.0起提供了线程池相关API: ExecutorService和Executors
+- ExecutorService:真正的线程池接口。常见子类ThreadPoolExecutor
+  - void execute(Runnable command)∶执行任务/命令，没有返回值，一般用来执行Runnable
+  - <T> Future<T> submit(Callable<T> task):执行任务，有返回值，一般又来执行Callable
+  - void shutdown()∶关闭连接池
+- Executors:工具类、线程池的工厂类，用于创建并返回不同类型的线程池
+
+
+
+## 注解
+
+### 内置注解
+
+@Override
+
+@Deprecated
+
+@SuppressWarnings
+
+### 元注解（meta-annotation)
+
+注解其他注解
+
+@Target：注解适用范围
+
+@Retention：什么级别保存注解，描述注解生命周期（SOURCE<CLASS<RUNTIME）
+
+@Document：注解包含在javadoc
+
+@Inherited：子类可继承父类注解
+
+
+
+## 反射
+
+Class类
+
+由系统创建，一个加载的类在jvm中只有一个Class实例，一个Class对象对应一个加载到JVM中的一个Class文件，每个类的实例会记得是有那个Class实例生成的，通过Class可以完整获得一个类中所有被加载的结构
+
+
+
+### Java内存
+
+堆：存放new的对象和数组
+
+​		可以被所有线程共享，不会存放别的对象的引用
+
+栈：存放基本变量类型（包含这个基本类型的数值）
+
+​		引用对象的变量（存放这个引用在堆里面的具体地址）
+
+方法区（特殊的堆）：可以被所有线程共享
+
+​		包含所有的class和static变量
+
+
+
+![image-20240228235144756](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240228235144756-170913550638024.png)
+
+![image-20240229000957026](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229000957026-170913659825225.png)
+
+
+
+![image-20240229101431193](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229101431193-170917287267126.png)
+
+![image-20240229101832076](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229101832076-170917311327327.png)
+
+
+
+![image-20240229102353990](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229102353990-170917343518428.png)
+
+![image-20240229102452165](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229102452165-170917349362929.png)
+
+![image-20240229103049504](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229103049504-170917385218330.png)
+
+![image-20240229103339415](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229103339415-170917402151731.png)
+
+![image-20240229103528516](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229103528516-170917413066332.png)
+
+![image-20240229105528302](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229105528302-170917532948533.png)
+
+![image-20240229105626791](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229105626791-170917538789834.png)
+
+![image-20240229105734851](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229105734851-170917545595035.png)
+
+![image-20240229105843315](D:\Studyspace\Markdown\Note\Java基础.assets\image-20240229105843315-170917552455436.png)

@@ -129,7 +129,3 @@ a/**/b: 忽略a/b, a/x/b, a/x/y/b等
 config.php: 忽略当前路径的 config.php 文件
 ```
 
-
-
-
-
